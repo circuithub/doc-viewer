@@ -843,22 +843,6 @@ var PDFView = {
     return value;
   },
 
-  get supportsFullscreen() {
-    var doc = document.documentElement;
-    var support = doc.requestFullscreen || doc.mozRequestFullScreen ||
-                  doc.webkitRequestFullScreen;
-
-    // Disable fullscreen button if we're in an iframe
-    if (!!window.frameElement)
-      support = false;
-
-    Object.defineProperty(this, 'supportsFullScreen', { value: support,
-                                                        enumerable: true,
-                                                        configurable: true,
-                                                        writable: false });
-    return support;
-  },
-
   get supportsIntegratedFind() {
     var support = false;
     Object.defineProperty(this, 'supportsIntegratedFind', { value: support,
@@ -1466,17 +1450,6 @@ var PDFView = {
 
     var visible = [];
 
-    // Algorithm broken in fullscreen mode
-    if (this.isFullscreen) {
-      var currentPage = this.pages[this.page - 1];
-      visible.push({
-        id: currentPage.id,
-        view: currentPage
-      });
-
-      return { first: currentPage, last: currentPage, views: visible};
-    }
-
     var bottom = top + scrollEl.clientHeight;
     var nextHeight, hidden, percent, viewHeight;
     for (; i <= ii && currentHeight < bottom; ++i) {
@@ -1538,72 +1511,6 @@ var PDFView = {
     var div = document.getElementById('printContainer');
     while (div.hasChildNodes())
       div.removeChild(div.lastChild);
-  },
-
-  fullscreen: function pdfViewFullscreen() {
-    var isFullscreen = document.fullscreenElement || document.mozFullScreen ||
-        document.webkitIsFullScreen;
-
-    if (isFullscreen) {
-      return false;
-    }
-
-    var wrapper = document.getElementById('viewerContainer');
-    if (document.documentElement.requestFullscreen) {
-      wrapper.requestFullscreen();
-    } else if (document.documentElement.mozRequestFullScreen) {
-      wrapper.mozRequestFullScreen();
-    } else if (document.documentElement.webkitRequestFullScreen) {
-      wrapper.webkitRequestFullScreen(Element.ALLOW_KEYBOARD_INPUT);
-    } else {
-      return false;
-    }
-
-    this.isFullscreen = true;
-    var currentPage = this.pages[this.page - 1];
-    this.previousScale = this.currentScaleValue;
-    this.parseScale('page-fit', true);
-
-    // Wait for fullscreen to take effect
-    setTimeout(function() {
-      currentPage.scrollIntoView();
-    }, 0);
-
-    this.showPresentationControls();
-    return true;
-  },
-
-  exitFullscreen: function pdfViewExitFullscreen() {
-    this.isFullscreen = false;
-    this.parseScale(this.previousScale);
-    this.page = this.page;
-    this.clearMouseScrollState();
-    this.hidePresentationControls();
-  },
-
-  showPresentationControls: function pdfViewShowPresentationControls() {
-    var DELAY_BEFORE_HIDING_CONTROLS = 3000;
-    var wrapper = document.getElementById('viewerContainer');
-    if (this.presentationControlsTimeout) {
-      clearTimeout(this.presentationControlsTimeout);
-    } else {
-      wrapper.classList.add('presentationControls');
-    }
-    this.presentationControlsTimeout = setTimeout(function hideControls() {
-      wrapper.classList.remove('presentationControls');
-      delete PDFView.presentationControlsTimeout;
-    }, DELAY_BEFORE_HIDING_CONTROLS);
-  },
-
-  hidePresentationControls: function pdfViewShowPresentationControls() {
-    if (!this.presentationControlsTimeout) {
-      return;
-    }
-    clearTimeout(this.presentationControlsTimeout);
-    delete this.presentationControlsTimeout;
-
-    var wrapper = document.getElementById('viewerContainer');
-    wrapper.classList.remove('presentationControls');
   },
 
   rotatePages: function pdfViewPageRotation(delta) {
@@ -2729,14 +2636,6 @@ document.addEventListener('DOMContentLoaded', function webViewerLoad(evt) {
     PDFBug.init();
   }
 
-  if (!PDFView.supportsPrinting) {
-    document.getElementById('print').classList.add('hidden');
-  }
-
-  if (!PDFView.supportsFullscreen) {
-    document.getElementById('fullscreen').classList.add('hidden');
-  }
-
   if (PDFView.supportsIntegratedFind) {
     document.querySelector('#viewFind').classList.add('hidden');
   }
@@ -2799,10 +2698,6 @@ document.addEventListener('DOMContentLoaded', function webViewerLoad(evt) {
       PDFView.zoomOut();
     });
 
-  document.getElementById('fullscreen').addEventListener('click',
-    function() {
-      PDFView.fullscreen();
-    });
 
   document.getElementById('openFile').addEventListener('click',
     function() {
@@ -3219,20 +3114,7 @@ window.addEventListener('afterprint', function afterPrint(evt) {
   PDFView.afterPrint();
 });
 
-(function fullscreenClosure() {
-  function fullscreenChange(e) {
-    var isFullscreen = document.fullscreenElement || document.mozFullScreen ||
-        document.webkitIsFullScreen;
 
-    if (!isFullscreen) {
-      PDFView.exitFullscreen();
-    }
-  }
-
-  window.addEventListener('fullscreenchange', fullscreenChange, false);
-  window.addEventListener('mozfullscreenchange', fullscreenChange, false);
-  window.addEventListener('webkitfullscreenchange', fullscreenChange, false);
-})();
 
 (function animationStartedClosure() {
   // The offsetParent is not set until the pdf.js iframe or object is visible.
