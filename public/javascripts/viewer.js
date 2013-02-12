@@ -141,81 +141,6 @@ var ProgressBar = (function ProgressBarClosure() {
 })();
 
 
-// Settings Manager - This is a utility for saving settings
-// First we see if localStorage is available
-// If not, we use FUEL in FF
-// Use asyncStorage for B2G
-var Settings = (function SettingsClosure() {
-  var isLocalStorageEnabled = (function localStorageEnabledTest() {
-    // Feature test as per http://diveintohtml5.info/storage.html
-    // The additional localStorage call is to get around a FF quirk, see
-    // bug #495747 in bugzilla
-    try {
-      return 'localStorage' in window && window['localStorage'] !== null &&
-          localStorage;
-    } catch (e) {
-      return false;
-    }
-  })();
-
-  function Settings(fingerprint) {
-    this.fingerprint = fingerprint;
-    this.initializedPromise = new PDFJS.Promise();
-
-    var resolvePromise = (function settingsResolvePromise(db) {
-      this.initialize(db || '{}');
-      this.initializedPromise.resolve();
-    }).bind(this);
-
-
-
-    if (isLocalStorageEnabled)
-      resolvePromise(localStorage.getItem('database'));
-  }
-
-  Settings.prototype = {
-    initialize: function settingsInitialize(database) {
-      database = JSON.parse(database);
-      if (!('files' in database))
-        database.files = [];
-      if (database.files.length >= SETTINGS_MEMORY)
-        database.files.shift();
-      var index;
-      for (var i = 0, length = database.files.length; i < length; i++) {
-        var branch = database.files[i];
-        if (branch.fingerprint == this.fingerprint) {
-          index = i;
-          break;
-        }
-      }
-      if (typeof index != 'number')
-        index = database.files.push({fingerprint: this.fingerprint}) - 1;
-      this.file = database.files[index];
-      this.database = database;
-    },
-
-    set: function settingsSet(name, val) {
-      if (!this.initializedPromise.isResolved)
-        return;
-
-      var file = this.file;
-      file[name] = val;
-      var database = JSON.stringify(this.database);
-      if (isLocalStorageEnabled)
-        localStorage.setItem('database', database);
-    },
-
-    get: function settingsGet(name, defaultValue) {
-      if (!this.initializedPromise.isResolved)
-        return defaultValue;
-
-      return this.file[name] || defaultValue;
-    }
-  };
-
-  return Settings;
-})();
-
 var cache = new Cache(CACHE_SIZE);
 var currentPageNumber = 1;
 
@@ -1155,8 +1080,6 @@ var PDFView = {
     document.getElementById('pageNumber').max = pagesCount;
 
     PDFView.documentFingerprint = id;
-    var store = PDFView.store = new Settings(id);
-    var storePromise = store.initializedPromise;
 
     this.pageRotation = 0;
 
@@ -1193,7 +1116,7 @@ var PDFView = {
     });
 
     // outline and initial view depends on destinations and pagesRefMap
-    var promises = [pagesPromise, destinationsPromise, storePromise,
+    var promises = [pagesPromise, destinationsPromise,
                     PDFView.animationStartedPromise];
     PDFJS.Promise.all(promises).then(function() {
       pdfDocument.getOutline().then(function(outline) {
@@ -1201,15 +1124,6 @@ var PDFView = {
       });
 
       var storedHash = null;
-      if (store.get('exists', false)) {
-        var page = store.get('page', '1');
-        var zoom = store.get('zoom', PDFView.currentScale);
-        var left = store.get('scrollLeft', '0');
-        var top = store.get('scrollTop', '0');
-
-        storedHash = 'page=' + page + '&zoom=' + zoom + ',' + left + ',' + top;
-      }
-
       self.setInitialView(storedHash, scale);
     });
 
@@ -2735,14 +2649,6 @@ function updateViewarea() {
     (PDFView.container.scrollTop - firstPage.y));
   pdfOpenParams += ',' + Math.round(topLeft[0]) + ',' + Math.round(topLeft[1]);
 
-  var store = PDFView.store;
-  store.initializedPromise.then(function() {
-    store.set('exists', true);
-    store.set('page', pageNumber);
-    store.set('zoom', normalizedScaleValue);
-    store.set('scrollLeft', Math.round(topLeft[0]));
-    store.set('scrollTop', Math.round(topLeft[1]));
-  });
 }
 
 window.addEventListener('resize', function webViewerResize(evt) {
