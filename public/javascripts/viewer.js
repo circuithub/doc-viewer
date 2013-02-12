@@ -2922,8 +2922,6 @@ function updateViewarea() {
     store.set('scrollLeft', Math.round(topLeft[0]));
     store.set('scrollTop', Math.round(topLeft[1]));
   });
-  var href = PDFView.getAnchorUrl(pdfOpenParams);
-  document.getElementById('viewBookmark').href = href;
 }
 
 window.addEventListener('resize', function webViewerResize(evt) {
@@ -2956,9 +2954,6 @@ window.addEventListener('change', function webViewerChange(evt) {
   fileReader.readAsArrayBuffer(file);
   PDFView.setTitleUsingUrl(file.name);
 
-  // URL does not reflect proper document location - hiding some icons.
-  document.getElementById('viewBookmark').setAttribute('hidden', 'true');
-  document.getElementById('download').setAttribute('hidden', 'true');
 }, true);
 
 function selectScaleOption(value) {
