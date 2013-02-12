@@ -20,7 +20,7 @@
     "pdf.js"
   ],
   "author": "CircuitHub <developers@circuithub.com> (circuithub.com)",
-  "license": "MIT",
+  "license": "Apache 2.0",
   "readmeFilename": "README.md",
   "dependencies": {
     "coffee-script": "1.4.0",

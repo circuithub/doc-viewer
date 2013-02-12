@@ -18,7 +18,7 @@
 
 'use strict';
 
-var DEFAULT_URL = 'compressed.tracemonkey-pldi-09.pdf';
+var DEFAULT_URL = 'https://s3.amazonaws.com/circuithub-static1/documents/fd107f7def8cc22e5f40a20370f14ebe.pdf';
 var DEFAULT_SCALE = 'auto';
 var DEFAULT_SCALE_DELTA = 1.1;
 var UNKNOWN_SCALE = 0;
@@ -44,9 +44,7 @@ var FindStates = {
   FIND_PENDING: 3
 };
 
-  PDFJS.workerSrc = '../build/pdf.js';
-
-var mozL10n = document.mozL10n || document.webL10n;
+  PDFJS.workerSrc = './javascripts/pdf.js';
 
 function getFileName(url) {
   var anchor = url.indexOf('#');
@@ -609,17 +607,15 @@ var PDFFindBar = {
         break;
 
       case FindStates.FIND_NOTFOUND:
-        findMsg = mozL10n.get('find_not_found', null, 'Phrase not found');
+        findMsg = 'Phrase not found';
         notFound = true;
         break;
 
       case FindStates.FIND_WRAPPED:
         if (previous) {
-          findMsg = mozL10n.get('find_reached_top', null,
-                      'Reached top of document, continued from bottom');
+          findMsg = 'Reached top of document, continued from bottom'
         } else {
-          findMsg = mozL10n.get('find_reached_bottom', null,
-                                'Reached end of document, continued from top');
+          findMsg = 'Reached end of document, continued from top'
         }
         break;
     }
@@ -902,8 +898,7 @@ var PDFView = {
           break;
         case 'complete':
           if (!args.data) {
-            PDFView.error(mozL10n.get('loading_error', null,
-                          'An error occurred while loading the PDF.'), e);
+            PDFView.error('An error occurred while loading the PDF.', e);
             break;
           }
           PDFView.open(args.data, 0);
@@ -952,8 +947,7 @@ var PDFView = {
       function getDocumentError(message, exception) {
         if (exception && exception.name === 'PasswordException') {
           if (exception.code === 'needpassword') {
-            var promptString = mozL10n.get('request_password', null,
-                                      'PDF is protected by a password:');
+            var promptString = 'PDF is protected by a password:';
             password = prompt(promptString);
             if (password && password.length > 0) {
               return PDFView.open(url, scale, password);
@@ -961,25 +955,21 @@ var PDFView = {
           }
         }
 
-        var loadingErrorMessage = mozL10n.get('loading_error', null,
-          'An error occurred while loading the PDF.');
+        var loadingErrorMessage = 'An error occurred while loading the PDF.';
 
         if (exception && exception.name === 'InvalidPDFException') {
           // change error message also for other builds
-          var loadingErrorMessage = mozL10n.get('invalid_file_error', null,
-                                        'Invalid or corrupted PDF file.');
+          var loadingErrorMessage = 'Invalid or corrupted PDF file.';
         }
 
         if (exception && exception.name === 'MissingPDFException') {
           // special message for missing PDF's
-          var loadingErrorMessage = mozL10n.get('missing_file_error', null,
-                                        'Missing PDF file.');
+          var loadingErrorMessage = 'Missing PDF file.';
 
         }
 
         var loadingIndicator = document.getElementById('loading');
-        loadingIndicator.textContent = mozL10n.get('loading_error_indicator',
-          null, 'Error');
+        loadingIndicator.textContent = 'Error';
         var moreInfo = {
           message: message
         };
@@ -1534,8 +1524,7 @@ var PDFView = {
 
   beforePrint: function pdfViewSetupBeforePrint() {
     if (!this.supportsPrinting) {
-      var printMessage = mozL10n.get('printing_not_supported', null,
-          'Warning: Printing is not fully supported by this browser.');
+      var printMessage ='Warning: Printing is not fully supported by this browser.';
       this.error(printMessage);
       return;
     }
@@ -2025,8 +2014,7 @@ var PageView = function pageView(container, pdfPage, id, scale,
       }
 
       if (error) {
-        PDFView.error(mozL10n.get('rendering_error', null,
-          'An error occurred while rendering the page.'), error);
+        PDFView.error('An error occurred while rendering the page.', error);
       }
 
       self.stats = pdfPage.stats;
@@ -2143,7 +2131,7 @@ var PageView = function pageView(container, pdfPage, id, scale,
 var ThumbnailView = function thumbnailView(container, pdfPage, id) {
   var anchor = document.createElement('a');
   anchor.href = PDFView.getAnchorUrl('#page=' + id);
-  anchor.title = mozL10n.get('thumb_page_title', {page: id}, 'Page {{page}}');
+  anchor.title = 'Page ' + id;
   anchor.onclick = function stopNavigation() {
     PDFView.page = id;
     return false;
@@ -2215,8 +2203,7 @@ var ThumbnailView = function thumbnailView(container, pdfPage, id) {
     canvas.width = canvasWidth;
     canvas.height = canvasHeight;
     canvas.className = 'thumbnailImage';
-    canvas.setAttribute('aria-label', mozL10n.get('thumb_page_canvas',
-      {page: id}, 'Thumbnail of Page {{page}}'));
+    canvas.setAttribute('aria-label', 'Thumbnail of Page ' + id);
 
     div.setAttribute('data-loaded', true);
 
@@ -2304,8 +2291,7 @@ var DocumentOutlineView = function documentOutlineView(outline) {
   if (!outline) {
     var noOutline = document.createElement('div');
     noOutline.classList.add('noOutline');
-    noOutline.textContent = mozL10n.get('no_outline', null,
-      'No Outline Available');
+    noOutline.textContent = 'No Outline Available';
     outlineView.appendChild(noOutline);
     return;
   }
@@ -2721,10 +2707,6 @@ document.addEventListener('DOMContentLoaded', function webViewerLoad(evt) {
   if ('disableWorker' in hashParams)
     PDFJS.disableWorker = (hashParams['disableWorker'] === 'true');
 
-  var locale = navigator.language;
-  if ('locale' in hashParams)
-    locale = hashParams['locale'];
-  mozL10n.setLanguage(locale);
 
   if ('textLayer' in hashParams) {
     switch (hashParams['textLayer']) {
@@ -2996,8 +2978,6 @@ function selectScaleOption(value) {
 }
 
 window.addEventListener('localized', function localized(evt) {
-  document.getElementsByTagName('html')[0].dir = mozL10n.getDirection();
-
   // Adjust the width of the zoom box to fit the content.
   var container = document.getElementById('scaleSelectContainer');
   var select = document.getElementById('scaleSelect');
