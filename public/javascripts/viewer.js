@@ -1494,25 +1494,6 @@ var PDFView = {
     return params;
   },
 
-  beforePrint: function pdfViewSetupBeforePrint() {
-    if (!this.supportsPrinting) {
-      var printMessage ='Warning: Printing is not fully supported by this browser.';
-      this.error(printMessage);
-      return;
-    }
-    var body = document.querySelector('body');
-    body.setAttribute('data-mozPrintCallback', true);
-    for (var i = 0, ii = this.pages.length; i < ii; ++i) {
-      this.pages[i].beforePrint();
-    }
-  },
-
-  afterPrint: function pdfViewSetupAfterPrint() {
-    var div = document.getElementById('printContainer');
-    while (div.hasChildNodes())
-      div.removeChild(div.lastChild);
-  },
-
   rotatePages: function pdfViewPageRotation(delta) {
 
     this.pageRotation = (this.pageRotation + 360 + delta) % 360;
@@ -1973,57 +1954,6 @@ var PageView = function pageView(container, pdfPage, id, scale,
 
     setupAnnotations(this.pdfPage, this.viewport);
     div.setAttribute('data-loaded', true);
-  };
-
-  this.beforePrint = function pageViewBeforePrint() {
-    var pdfPage = this.pdfPage;
-    var viewport = pdfPage.getViewport(1);
-    // Use the same hack we use for high dpi displays for printing to get better
-    // output until bug 811002 is fixed in FF.
-    var PRINT_OUTPUT_SCALE = 2;
-    var canvas = this.canvas = document.createElement('canvas');
-    canvas.width = Math.floor(viewport.width) * PRINT_OUTPUT_SCALE;
-    canvas.height = Math.floor(viewport.height) * PRINT_OUTPUT_SCALE;
-    canvas.style.width = (PRINT_OUTPUT_SCALE * viewport.width) + 'pt';
-    canvas.style.height = (PRINT_OUTPUT_SCALE * viewport.height) + 'pt';
-    var cssScale = 'scale(' + (1 / PRINT_OUTPUT_SCALE) + ', ' +
-                              (1 / PRINT_OUTPUT_SCALE) + ')';
-    CustomStyle.setProp('transform' , canvas, cssScale);
-    CustomStyle.setProp('transformOrigin' , canvas, '0% 0%');
-
-    var printContainer = document.getElementById('printContainer');
-    printContainer.appendChild(canvas);
-
-    var self = this;
-    canvas.mozPrintCallback = function(obj) {
-      var ctx = obj.context;
-
-      ctx.save();
-      ctx.fillStyle = 'rgb(255, 255, 255)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      ctx.restore();
-      ctx.scale(PRINT_OUTPUT_SCALE, PRINT_OUTPUT_SCALE);
-
-      var renderContext = {
-        canvasContext: ctx,
-        viewport: viewport
-      };
-
-      pdfPage.render(renderContext).then(function() {
-        // Tell the printEngine that rendering this canvas/page has finished.
-        obj.done();
-        self.pdfPage.destroy();
-      }, function(error) {
-        console.error(error);
-        // Tell the printEngine that rendering this canvas/page has failed.
-        // This will make the print proces stop.
-        if ('abort' in obj)
-          obj.abort();
-        else
-          obj.done();
-        self.pdfPage.destroy();
-      });
-    };
   };
 
   this.updateStats = function pageViewUpdateStats() {
@@ -2704,10 +2634,6 @@ document.addEventListener('DOMContentLoaded', function webViewerLoad(evt) {
       document.getElementById('fileInput').click();
     });
 
-  document.getElementById('print').addEventListener('click',
-    function() {
-      window.print();
-    });
 
   document.getElementById('download').addEventListener('click',
     function() {
@@ -3105,15 +3031,6 @@ window.addEventListener('keydown', function keydown(evt) {
     PDFView.clearMouseScrollState();
   }
 });
-
-window.addEventListener('beforeprint', function beforePrint(evt) {
-  PDFView.beforePrint();
-});
-
-window.addEventListener('afterprint', function afterPrint(evt) {
-  PDFView.afterPrint();
-});
-
 
 
 (function animationStartedClosure() {
