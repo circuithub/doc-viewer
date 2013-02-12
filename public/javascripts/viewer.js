@@ -1167,8 +1167,7 @@ var PDFView = {
 
     var pagesCount = pdfDocument.numPages;
     var id = pdfDocument.fingerprint;
-    document.getElementById('numPages').textContent =
-      mozL10n.get('page_of', {pageCount: pagesCount}, 'of {{pageCount}}');
+    document.getElementById('numPages').textContent = 'of ' + pagesCount;
     document.getElementById('pageNumber').max = pagesCount;
 
     PDFView.documentFingerprint = id;
