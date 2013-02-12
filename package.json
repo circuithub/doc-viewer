@@ -1,0 +1,31 @@
+{
+  "name": "doc-viewer",
+  "version": "0.1.0",
+  "description": "HTML5 pdf viewer control based on pdf.js",
+  "main": "app.js",
+  "scripts": {
+    "test": "node_modules/coffee-script/bin/cake test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/circuithub/doc-viewer.git"
+  },
+  "keywords": [
+    "pdf",
+    "html5",
+    "pdf",
+    "viewer",
+    "doc",
+    "viewer",
+    "pdf.js"
+  ],
+  "author": "CircuitHub <developers@circuithub.com> (circuithub.com)",
+  "license": "MIT",
+  "readmeFilename": "README.md",
+  "dependencies": {
+    "coffee-script": "1.4.0",
+    "express": "3.1.0",
+    "jade": "0.28.1"
+  }
+
+}
